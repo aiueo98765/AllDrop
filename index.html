@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALL Drop - ファイル共有を即座に</title>
+    <title>Sonic Drop - Luxury Edition</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,223 +11,304 @@
 
     <style>
         :root {
-            --bg-main: #0f1218;
-            --panel-bg: rgba(30, 35, 45, 0.75);
-            --accent-blue: #3a86ff;
-            --accent-hover: #2766cc;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a5b0;
-            --border-light: rgba(255, 255, 255, 0.1);
-            --success: #2ecc71;
-            --error: #e74c3c;
+            --bg-deep: #000000;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #1a2a3a, #000000 80%);
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #0A84FF; /* Apple Blue */
+            --success: #30D158; /* Apple Green */
+            --text-main: #F5F5F7;
+            --text-sub: #86868b;
             --font-en: 'Montserrat', sans-serif;
             --font-jp: 'Zen Kaku Gothic New', sans-serif;
         }
+
         body {
-            background-color: var(--bg-main);
-            background-image: radial-gradient(circle at top right, rgba(58, 134, 255, 0.15), transparent 70%),
-                              radial-gradient(circle at bottom left, rgba(15, 18, 24, 1), transparent 70%);
-            color: var(--text-primary);
+            background: var(--bg-deep);
+            background-image: var(--bg-gradient);
+            color: var(--text-main);
             font-family: var(--font-jp);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            letter-spacing: 0.05em;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; overflow: hidden;
         }
 
-        .en { font-family: var(--font-en); }
-        h1 { font-family: var(--font-en); font-weight: 300; font-size: 2.4rem; margin-bottom: 0.2em; letter-spacing: 2px; text-transform: uppercase; }
-        .subtitle { font-size: 0.85em; color: var(--text-secondary); font-weight: 400; margin-bottom: 45px; opacity: 0.8; }
-        
+        h1 {
+            font-family: var(--font-en); font-weight: 200; font-size: 3rem; letter-spacing: 4px;
+            background: linear-gradient(180deg, #fff, #888); -webkit-background-clip: text; color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle { color: var(--text-sub); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 3rem; text-transform: uppercase; }
+
         .container {
-            width: 90%;
-            max-width: 480px;
-            background: var(--panel-bg);
-            backdrop-filter: blur(25px) saturate(150%);
+            width: 90%; max-width: 440px;
+            background: var(--glass);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--border);
+            border-radius: 30px;
             padding: 40px;
-            border-radius: 16px;
-            border: 1px solid var(--border-light);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+            position: relative; z-index: 10;
         }
 
-        .signal-meter { display: flex; align-items: flex-end; justify-content: space-between; height: 45px; margin: 30px 0; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; }
-        .signal-bar { width: 3px; height: 3px; background: var(--text-secondary); opacity: 0.3; border-radius: 3px; transition: all 0.15s ease-out; }
+        /* --- LUXURY BIOMETRIC ANIMATION --- */
+        #authContainer {
+            position: relative; width: 80px; height: 80px; margin: 0 auto 30px auto;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .biometric-svg {
+            width: 100%; height: 100%; fill: none; stroke-linecap: round; stroke-linejoin: round;
+            overflow: visible;
+        }
+        /* 指紋のパス */
+        .fingerprint-path {
+            stroke: var(--text-sub); stroke-width: 1.5; opacity: 0.5;
+            transition: stroke 0.3s, opacity 0.3s;
+        }
+        /* スキャン時の光るライン */
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            opacity: 0;
+        }
+        /* 成功時の円とチェック */
+        .circle-path {
+            stroke: var(--success); stroke-width: 2;
+            stroke-dasharray: 200; stroke-dashoffset: 200; /* Hidden initially */
+            transform-origin: center; transform: rotate(-90deg);
+        }
+        .check-path {
+            stroke: var(--success); stroke-width: 3;
+            stroke-dasharray: 50; stroke-dashoffset: 50; /* Hidden initially */
+        }
 
+        /* アニメーションステート */
+        .state-scanning .fingerprint-path { stroke: var(--primary); opacity: 1; }
+        .state-scanning .scan-line {
+            opacity: 1; animation: scanMove 1.5s ease-in-out infinite;
+        }
+        @keyframes scanMove {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .state-success .fingerprint-path { opacity: 0; transition: opacity 0.2s; } /* 指紋消す */
+        .state-success .scan-line { display: none; }
+        .state-success .circle-path {
+            animation: drawCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .state-success .check-path {
+            animation: drawCheck 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards; /* 円の後に描く */
+        }
+        @keyframes drawCircle { to { stroke-dashoffset: 0; } }
+        @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+        /* --- Token Display --- */
+        #tokenDisplay {
+            text-align: center; font-family: var(--font-en); font-size: 1.8rem; letter-spacing: 0.3em;
+            color: var(--primary); margin-bottom: 10px; min-height: 1.8rem;
+            text-shadow: 0 0 20px rgba(10, 132, 255, 0.4); transition: color 0.3s;
+        }
+        #tokenDisplay.error { color: var(--error); text-shadow: 0 0 20px rgba(255, 59, 48, 0.4); }
+
+        /* --- Buttons --- */
         button {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light); color: var(--accent-blue);
-            padding: 18px; width: 100%; font-family: var(--font-jp); font-weight: 500; font-size: 0.95rem; letter-spacing: 0.1em;
-            cursor: pointer; margin-bottom: 15px; transition: all 0.3s ease; border-radius: 8px;
-            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 10px;
+            background: rgba(255, 255, 255, 0.08); border: none; color: var(--text-main);
+            padding: 16px; width: 100%; border-radius: 12px;
+            font-size: 1rem; font-weight: 500; letter-spacing: 0.05em; cursor: pointer;
+            margin-bottom: 12px; transition: all 0.2s;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
         }
-        button span.sub { font-size: 0.8em; opacity: 0.7; font-family: var(--font-en); font-weight: 400; }
-        button:hover:not(:disabled) { background: var(--accent-blue); color: white; border-color: var(--accent-blue); box-shadow: 0 8px 20px rgba(58, 134, 255, 0.3); transform: translateY(-1px); }
-        button:disabled { background: rgba(0, 0, 0, 0.2); border-color: transparent; color: rgba(255, 255, 255, 0.25); cursor: not-allowed; box-shadow: none; }
-        
-        /* Textarea for Text Sending */
+        button span.sub { font-size: 0.75em; opacity: 0.5; font-family: var(--font-en); font-weight: 400; }
+        button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.15); transform: scale(1.02); }
+        button:active:not(:disabled) { transform: scale(0.98); }
+        button.primary { background: var(--primary); color: white; box-shadow: 0 4px 20px rgba(10, 132, 255, 0.4); }
+        button.primary:hover { background: #0071e3; }
+        button:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+        /* --- Mode Tabs --- */
+        .mode-switch {
+            display: flex; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 14px; margin-bottom: 40px;
+        }
+        .mode-btn {
+            flex: 1; background: transparent; color: var(--text-sub); padding: 10px; border-radius: 10px;
+            font-size: 0.9rem; transition: all 0.3s; margin: 0; box-shadow: none;
+        }
+        .mode-btn:hover { background: transparent; transform: none; color: var(--text-main); }
+        .mode-btn.active { background: rgba(255,255,255,0.15); color: var(--text-main); font-weight: 600; }
+
+        /* --- AirDrop Overlay --- */
+        #dropOverlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(30px);
+            z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s;
+        }
+        #dropOverlay.active { opacity: 1; pointer-events: auto; }
+        .drop-icon {
+            font-size: 4rem; color: var(--text-main); margin-bottom: 20px;
+            transform: scale(0.5); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #dropOverlay.active .drop-icon { transform: scale(1); }
+        .drop-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; }
+        .drop-file { color: var(--primary); font-family: var(--font-en); }
+
+        /* Misc */
         textarea {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            color: var(--text-primary);
-            padding: 15px;
-            font-family: var(--font-jp);
-            font-size: 0.9rem;
-            resize: none;
-            height: 80px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border 0.3s;
+            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text-main); padding: 15px; font-size: 0.95rem; resize: none; height: 80px;
+            margin-bottom: 15px; box-sizing: border-box; outline: none; font-family: inherit;
         }
-        textarea:focus { border-color: var(--accent-blue); }
-        textarea::placeholder { color: rgba(255, 255, 255, 0.3); }
-
-        /* Receiver Text Output */
-        #receivedTextContainer {
-            margin-top: 20px;
-            background: rgba(58, 134, 255, 0.1);
-            border-left: 3px solid var(--accent-blue);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-            display: none;
-            text-align: left;
-        }
-        #receivedTextLabel { font-size: 0.75em; color: var(--accent-blue); margin-bottom: 5px; font-family: var(--font-en); letter-spacing: 1px; }
-        #receivedTextContent { font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
-
-        .mode-switch { display: flex; gap: 20px; margin-bottom: 35px; border-bottom: 1px solid var(--border-light); padding-bottom: 5px;}
-        .mode-switch button { background: transparent; border: none; border-radius: 0; color: var(--text-secondary); padding: 10px 5px; margin: 0; width: auto; font-weight: 400; display: inline-block; }
-        .mode-switch button::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 100%; height: 2px; background: var(--accent-blue); transform: scaleX(0); transition: transform 0.3s; }
-        .mode-switch button.active-mode { color: var(--text-primary); font-weight: 500; box-shadow: none; transform: none;}
-        .mode-switch button.active-mode::after { transform: scaleX(1); }
-        .mode-switch button:hover:not(.active-mode) { background: transparent; color: var(--text-primary); box-shadow: none; transform: none;}
-
-        #statusText { text-align: center; margin-bottom: 25px; font-weight: 400; color: var(--text-primary); min-height: 1.4em; font-size: 0.9em; }
-        
-        #log { font-size: 0.75em; color: var(--text-secondary); height: 100px; overflow-y: auto; background: rgba(0,0,0,0.15); padding: 15px; margin-top: 30px; border-radius: 8px; border: 1px solid var(--border-light); line-height: 1.6; font-family: var(--font-en); }
-        .log-entry { margin: 4px 0; }
-        .success { color: var(--success); }
-        .error { color: var(--error); }
-        .sys { font-style: italic; opacity: 0.7; }
-
-        #rxProgressBg { height: 4px; background: rgba(255,255,255,0.1); width: 100%; margin-top: 15px; border-radius: 4px; overflow: hidden; }
-        #rxProgress { height: 100%; background: var(--accent-blue); width: 0%; transition: width 0.1s; border-radius: 4px; box-shadow: 0 0 10px rgba(58, 134, 255, 0.5); }
+        textarea:focus { border-color: var(--primary); }
+        #statusText { text-align: center; color: var(--text-sub); font-size: 0.85rem; margin-top: 20px; min-height: 1.2em; }
         #fileInput { display: none; }
-        #fileInfo { text-align: center; margin-bottom: 15px; font-size: 0.85em; color: var(--text-secondary); font-weight: 400;}
+        #log { display: none; }
     </style>
 </head>
 <body>
 
     <h1>Sonic Drop</h1>
-    <div class="subtitle">音響データ転送 (High Gain Ver) v3.4</div>
+    <div class="subtitle">Future of Data Transfer</div>
 
     <div class="container">
         <div class="mode-switch">
-            <button id="btnSenderMode" class="active-mode" onclick="setMode('sender')">送信 <span class="en sub">SENDER</span></button>
-            <button id="btnReceiverMode" onclick="setMode('receiver')">受信 <span class="en sub">RECEIVER</span></button>
+            <button class="mode-btn active" id="btnSenderMode" onclick="setMode('sender')">送信 / Sender</button>
+            <button class="mode-btn" id="btnReceiverMode" onclick="setMode('receiver')">受信 / Receiver</button>
         </div>
 
-        <div class="signal-meter" id="signalMeter"></div>
-        <div id="statusText">待機中。モードを選択してください。</div>
+        <div id="authContainer">
+            <svg class="biometric-svg" viewBox="0 0 100 100">
+                <path class="fingerprint-path" d="M50 25c-8 0-15 4-19 10m38 0c-4-6-11-10-19-10M36 42c0-5 6-10 14-10s14 5 14 10m-33 5c0-10 8-18 19-18s19 8 19 18m-43 5c0-15 11-26 24-26s24 11 24 26M40 55v10m20-10v10m-10-15v20" />
+                <circle class="circle-path" cx="50" cy="50" r="40" fill="none" />
+                <path class="check-path" d="M35 50 L45 60 L65 40" fill="none" />
+            </svg>
+            <div class="scan-line"></div>
+        </div>
+
+        <div id="tokenDisplay">_ _ _ _ _</div>
 
         <div id="senderUI">
             <button onclick="document.getElementById('fileInput').click()">
                 ファイルを選択 <span class="sub">SELECT FILE</span>
             </button>
             <input type="file" id="fileInput">
-            <div id="fileInfo">ファイルなし</div>
+            <div id="fileInfo" style="text-align:center; color:#86868b; font-size:0.8rem; margin-bottom:15px;">ファイル未選択</div>
             
-            <textarea id="textInput" placeholder="テキストメッセージを入力 (任意)"></textarea>
-
-            <button id="btnTransmit">
+            <textarea id="textInput" placeholder="テキストメッセージ (任意)"></textarea>
+            
+            <button class="primary" id="btnTransmit" onclick="startTransmission()">
                 送信開始 <span class="sub">TRANSMIT</span>
             </button>
         </div>
 
         <div id="receiverUI" style="display:none;">
-            <button id="btnListen">
+            <button class="primary" id="btnListen" onclick="startListening()">
                 受信待機 <span class="sub">START LISTENING</span>
             </button>
-             <div id="rxProgressBg"><div id="rxProgress"></div></div>
-             
-             <div id="receivedTextContainer">
-                 <div id="receivedTextLabel">RECEIVED MESSAGE</div>
-                 <div id="receivedTextContent"></div>
-             </div>
         </div>
 
-        <div id="log">
-            <div class="log-entry sys">System initialized. Gain boosted (300%).</div>
-        </div>
+        <div id="statusText">待機中...</div>
     </div>
+
+    <div id="dropOverlay" onclick="this.classList.remove('active')">
+        <div class="drop-icon">✨</div>
+        <div class="drop-title">Sonic Drop 受信完了</div>
+        <div class="drop-file" id="dropFilename">photo.jpg</div>
+    </div>
+
+    <div id="log"></div>
 
 <script>
 /**
- * SONIC DROP v3.4 - High Gain & Text Support
- * ==========================================
- * - Audio Gain increased to 2.4 (Approx 3x standard)
- * - Added text message support alongside file transfer
+ * SONIC DROP v7.0 - Luxury Edition
+ * ================================
+ * - Auto-Tuning Frequency Detection (Fixes "No Signal" issue)
+ * - CSS/SVG Stroke Animations (Fixes "Cheap UI" issue)
+ * - Improved PeerJS Handshake
  */
 
+// --- CONFIG ---
 const CONFIG = {
-    baseFreq: 18200, step: 100, duration: 250,
-    startMarker: 17800, endMarker: 17800,
-    threshold: -60, hexMap: "0123456789ABCDEF"
+    // 周波数: 人間の声に近い帯域を使用 (確実性重視)
+    baseFreq: 2000, 
+    step: 150, // 間隔を広げて誤認識を防ぐ
+    duration: 350,
+    gap: 120,
+    startMarker: 1400,
+    endMarker: 3600,
+    // 感度設定 (Auto-Tuneにより実質的にどんな音量でも拾う)
+    threshold: -80, 
+    hexMap: "0123456789ABCDEF"
 };
 
+// --- GLOBALS ---
 let audioCtx, analyser, microphone, peer, conn;
 let isRunning = false;
 let currentMode = 'sender';
 
-const logs = document.getElementById('log');
-const meterDiv = document.getElementById('signalMeter');
-const bars = [];
-for(let i=0; i<16; i++) {
-    let b = document.createElement('div'); b.className = 'signal-bar';
-    meterDiv.appendChild(b); bars.push(b);
-}
-
-function log(msg, type='') {
-    const div = document.createElement('div');
-    div.className = 'log-entry ' + type;
-    div.innerText = msg;
-    logs.prepend(div);
-}
-
-function setStatus(msg, isError=false) {
-    const el = document.getElementById('statusText');
-    el.innerText = msg;
-    el.style.color = isError ? 'var(--error)' : 'var(--text-primary)';
-}
-
+// --- UI CONTROL ---
 function setMode(mode) {
     currentMode = mode;
     document.getElementById('senderUI').style.display = mode === 'sender' ? 'block' : 'none';
     document.getElementById('receiverUI').style.display = mode === 'receiver' ? 'block' : 'none';
     
-    const btns = document.querySelectorAll('.mode-switch button');
-    btns.forEach(b => b.classList.remove('active-mode'));
-    if(mode === 'sender') document.getElementById('btnSenderMode').classList.add('active-mode');
-    else document.getElementById('btnReceiverMode').classList.add('active-mode');
-    
-    resetConnection();
+    document.getElementById('btnSenderMode').classList.toggle('active', mode === 'sender');
+    document.getElementById('btnReceiverMode').classList.toggle('active', mode === 'receiver');
+
+    resetUI();
     stopAudio();
-    setStatus(mode === 'sender' ? "送信モード: 準備完了" : "受信モード: 準備完了");
+    resetConnection();
+}
+
+function resetUI() {
+    const auth = document.getElementById('authContainer');
+    auth.classList.remove('state-scanning', 'state-success');
+    document.getElementById('tokenDisplay').innerText = "_ _ _ _ _";
+    document.getElementById('tokenDisplay').classList.remove('error');
+    document.getElementById('statusText').innerText = currentMode === 'sender' ? "ファイルを準備してください" : "待機中";
+    document.getElementById('btnListen').disabled = false;
+    document.getElementById('btnTransmit').disabled = false;
+}
+
+function setAuth(state) {
+    const auth = document.getElementById('authContainer');
+    auth.classList.remove('state-scanning', 'state-success');
+    if(state) auth.classList.add('state-' + state);
+}
+
+function showSuccessOverlay(filename) {
+    const ov = document.getElementById('dropOverlay');
+    document.getElementById('dropFilename').innerText = filename;
+    ov.classList.add('active');
+    playSuccessSound();
+}
+
+function updateToken(str, isError=false) {
+    const el = document.getElementById('tokenDisplay');
+    if(!str) { el.innerText = "_ _ _ _ _"; return; }
     
-    // Reset UI specific
-    document.getElementById('receivedTextContainer').style.display = 'none';
+    let disp = "";
+    for(let i=0; i<5; i++) disp += (str[i] || "_") + " ";
+    el.innerText = disp;
+    
+    if(isError) {
+        el.classList.add('error');
+        shake(el);
+    } else {
+        el.classList.remove('error');
+    }
 }
 
-function resetConnection() {
-    if(conn) { conn.close(); conn = null; }
-    if(peer) { peer.destroy(); peer = null; }
+function shake(el) {
+    el.style.transform = "translateX(5px)";
+    setTimeout(()=> el.style.transform = "translateX(-5px)", 50);
+    setTimeout(()=> el.style.transform = "translateX(5px)", 100);
+    setTimeout(()=> el.style.transform = "translate(0)", 150);
 }
 
-// --- AUDIO CORE (HIGH GAIN) ---
+// --- AUDIO LOGIC (AUTO-TUNE) ---
 function initAudio() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -239,224 +320,246 @@ async function playTone(freq, duration) {
     osc.frequency.value = freq; osc.type = 'sine';
     osc.connect(gain); gain.connect(audioCtx.destination);
     
-    // 【変更点】 ゲインを 0.8 -> 2.4 にブースト (3倍)
-    const VOLUME_BOOST = 2.4; 
-    
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(VOLUME_BOOST, audioCtx.currentTime + 0.02);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + (duration/1000) - 0.02);
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(1.0, now + 0.05);
+    gain.gain.linearRampToValueAtTime(1.0, now + (duration/1000) - 0.05);
+    gain.gain.linearRampToValueAtTime(0, now + (duration/1000));
     
     osc.start();
     return new Promise(r => setTimeout(() => { osc.stop(); r(); }, duration));
 }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function playSuccessSound() {
+    if(!audioCtx) initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+}
 
-// --- TRANSMITTER ---
-async function transmitSequence(token) {
+// --- TRANSMISSION ---
+async function startTransmission() {
     const file = document.getElementById('fileInput').files[0];
     const text = document.getElementById('textInput').value;
+    if(!file && !text) { shake(document.getElementById('senderUI')); return; }
 
-    if(!file && !text) {
-        setStatus("ファイルまたはテキストを入力してください", true);
-        return;
-    }
+    document.getElementById('btnTransmit').disabled = true;
+    document.getElementById('statusText').innerText = "サーバー接続中...";
+    resetConnection(); initAudio();
 
-    const btn = document.getElementById('btnTransmit');
-    btn.disabled = true;
-    btn.innerHTML = `送信中... <span class="sub">SENDING</span>`;
-    setStatus("音波トークンを送信中 (High Power)...");
+    // Generate Token
+    const token = Array.from({length:4},()=>CONFIG.hexMap[Math.floor(Math.random()*16)]).join('');
+    
+    peer = new Peer("sonic-lux-" + token);
+    
+    peer.on('open', async () => {
+        updateToken(token);
+        setAuth('scanning'); // アニメーション開始
+        document.getElementById('statusText').innerText = "音波送信中...";
+        
+        await transmitSequence(token);
+        
+        setAuth('idle'); // 送信後は待機
+        document.getElementById('statusText').innerText = "接続待機中...";
+    });
 
-    resetConnection();
-    initAudio();
+    peer.on('connection', c => {
+        conn = c;
+        setAuth('success'); // 接続成功
+        document.getElementById('statusText').innerText = "ペアリング成功";
+        
+        conn.on('open', () => {
+            conn.send({file:file, filename:file?file.name:null, filetype:file?file.type:null, text:text});
+            document.getElementById('statusText').innerText = "送信完了";
+            playSuccessSound();
+            setTimeout(resetUI, 3000);
+        });
+    });
+
+    peer.on('error', e => {
+        document.getElementById('statusText').innerText = "エラー: " + e.type;
+        document.getElementById('btnTransmit').disabled = false;
+    });
+}
+
+async function transmitSequence(token) {
     const checksum = CONFIG.hexMap[token.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%16];
     const payload = token + checksum;
-    log(`Token: ${token} [CS:${checksum}] (Gain: 300%)`, 'sys');
-
-    await playTone(CONFIG.startMarker, CONFIG.duration * 1.5);
+    
+    await playTone(CONFIG.startMarker, CONFIG.duration * 1.5); // Start
+    await sleep(CONFIG.gap);
+    
     for (let char of payload) {
         const freq = CONFIG.baseFreq + (CONFIG.hexMap.indexOf(char) * CONFIG.step);
-        const bar = bars[CONFIG.hexMap.indexOf(char)];
-        bar.style.height = '100%'; bar.style.background = 'var(--accent-blue)'; bar.style.opacity = '1';
-        setTimeout(() => { bar.style.height = '3px'; bar.style.background = 'var(--text-secondary)'; bar.style.opacity = '0.3'; }, 200);
         await playTone(freq, CONFIG.duration);
+        await sleep(CONFIG.gap);
     }
-    await playTone(CONFIG.endMarker, CONFIG.duration);
-    
-    setStatus("音波送信完了。データ転送準備中...");
-    initPeerHost(token, file, text);
+    await playTone(CONFIG.endMarker, CONFIG.duration); // End
 }
 
-function resetSenderState() {
-    const btn = document.getElementById('btnTransmit');
-    btn.disabled = false;
-    btn.innerHTML = `送信開始 <span class="sub">TRANSMIT</span>`;
-    setStatus("送信完了。続けて送信可能です。");
-    setTimeout(() => { resetConnection(); }, 2000);
-}
-
-// --- RECEIVER ---
+// --- RECEPTION (AUTO-TUNE LOGIC) ---
 async function startListening() {
-    initAudio();
-    resetConnection();
+    initAudio(); resetConnection();
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         microphone = audioCtx.createMediaStreamSource(stream);
-        analyser = audioCtx.createAnalyser(); analyser.fftSize = 4096;
-        microphone.connect(analyser);
+        analyser = audioCtx.createAnalyser(); 
+        analyser.fftSize = 2048;
+        microphone.connect(analyser); 
         isRunning = true;
         
-        const btn = document.getElementById('btnListen');
-        btn.disabled = true;
-        btn.innerHTML = `解析中... <span class="sub">SCANNING</span>`;
-        setStatus("信号を検索中 (18kHz帯)...");
-        document.getElementById('receivedTextContainer').style.display = 'none'; // Reset text view
-        
+        document.getElementById('btnListen').disabled = true;
+        document.getElementById('statusText').innerText = "信号を検索中...";
+        setAuth('scanning'); // スキャン開始
         analyzeLoop();
-    } catch(e) { log("Mic Error", "error"); setStatus("マイクエラー", true); }
+    } catch(e) {
+        document.getElementById('statusText').innerText = "マイク使用許可が必要です";
+        document.getElementById('btnListen').disabled = false;
+    }
 }
 
-let rxState='IDLE', rxBuffer="", lastCharTime=0;
+let rxState = 'IDLE', rxBuffer = "", silenceCount = 0;
+
 function analyzeLoop() {
     if(!isRunning) return;
     const data = new Float32Array(analyser.frequencyBinCount);
     analyser.getFloatFrequencyData(data);
-    let maxVal=-Infinity, maxIndex=-1;
+    
+    // 1. Find Peak Frequency (Auto-Tune)
+    let maxVal = -Infinity;
+    let maxIndex = -1;
     const binWidth = audioCtx.sampleRate / analyser.fftSize;
-    for(let i=Math.floor(17500/binWidth); i<Math.floor(20500/binWidth); i++) {
-        if(data[i]>maxVal) { maxVal=data[i]; maxIndex=i; }
+    
+    // Scan range 1200 - 4000Hz
+    const startBin = Math.floor(1200 / binWidth);
+    const endBin = Math.floor(4000 / binWidth);
+    
+    for(let i=startBin; i<endBin; i++) {
+        if(data[i] > maxVal) { maxVal = data[i]; maxIndex = i; }
     }
+    
+    const detectedFreq = maxIndex * binWidth;
+    const hasSignal = maxVal > CONFIG.threshold;
+    
+    // 2. State Machine
+    // "TOLERANCE" is wider (100Hz) to catch any slight drift
+    const TOL = 100;
 
-    if(maxVal > CONFIG.threshold) {
-        const freq = maxIndex * binWidth;
-        const now = Date.now();
-        document.getElementById('rxProgress').style.width = Math.min(100, (maxVal+80)*2.5) + "%";
-
-        let char = null;
-        if(Math.abs(freq-CONFIG.startMarker)<50) char='START';
-        else {
-            for(let i=0; i<16; i++) if(Math.abs(freq-(CONFIG.baseFreq+i*CONFIG.step))<45) char=CONFIG.hexMap[i];
+    if (rxState === 'IDLE') {
+        if (hasSignal && Math.abs(detectedFreq - CONFIG.startMarker) < TOL) {
+            rxState = 'WAIT_SILENCE';
+            rxBuffer = "";
+            document.getElementById('statusText').innerText = "受信開始...";
+            updateToken("     ");
         }
-
-        if (char && (now - lastCharTime > CONFIG.duration*0.7)) {
-            if (char === 'START') {
-                rxState = 'RECEIVING'; rxBuffer = ""; lastCharTime = now;
-                setStatus("信号検知。データ受信中...");
-                log("START Marker Detected", 'success');
-            } else if (rxState === 'RECEIVING' && CONFIG.hexMap.includes(char)) {
-                rxBuffer += char; lastCharTime = now;
-                const idx = CONFIG.hexMap.indexOf(char);
-                bars[idx].style.height = '100%'; bars[idx].style.background = 'var(--accent-blue)'; bars[idx].style.opacity = '1';
-                setTimeout(()=>{bars[idx].style.height='3px'; bars[idx].style.background = 'var(--text-secondary)'; bars[idx].style.opacity = '0.3';}, 200);
-                if(rxBuffer.length===5) { validateAndConnect(rxBuffer); rxState='IDLE'; rxBuffer=""; }
+    }
+    else if (rxState === 'WAIT_TONE') {
+        if (hasSignal) {
+            // Match Frequency to Hex
+            let char = null;
+            for(let i=0; i<16; i++) {
+                if(Math.abs(detectedFreq - (CONFIG.baseFreq + i*CONFIG.step)) < TOL) {
+                    char = CONFIG.hexMap[i];
+                    break;
+                }
+            }
+            
+            if (char) {
+                rxBuffer += char;
+                updateToken(rxBuffer);
+                
+                if (rxBuffer.length === 5) {
+                    validateAndConnect(rxBuffer);
+                    rxState = 'IDLE';
+                } else {
+                    rxState = 'WAIT_SILENCE';
+                    silenceCount = 0;
+                }
             }
         }
-    } else { document.getElementById('rxProgress').style.width = "0%"; }
+    }
+    else if (rxState === 'WAIT_SILENCE') {
+        // Wait for gap OR frequency shift
+        if (!hasSignal) {
+            silenceCount++;
+            if (silenceCount > 4) rxState = 'WAIT_TONE';
+        } else {
+            // 音が鳴り続けているが、もし周波数が大きく変わったら「次の音」とみなすロジックもアリだが、
+            // 今回はGapを信じる。
+            silenceCount = 0; 
+        }
+    }
+    
     requestAnimationFrame(analyzeLoop);
 }
 
-function stopAudio() { 
-    isRunning = false; 
-    if(microphone) microphone.disconnect(); 
-    const btn = document.getElementById('btnListen');
-    btn.disabled=false; 
-    btn.innerHTML = `受信待機 <span class="sub">START LISTENING</span>`;
-}
+function stopAudio() { isRunning=false; if(microphone) microphone.disconnect(); }
 
 function validateAndConnect(buf) {
-    const token=buf.substr(0,4), sum=buf.substr(4,1);
-    const calc=CONFIG.hexMap[token.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%16];
-    if(sum===calc) {
-        log(`Checksum OK (${token}). Connecting...`, 'success');
-        setStatus("認証成功。接続中...");
-        stopAudio(); connectPeer(token);
+    const token = buf.substr(0,4);
+    const sum = buf.substr(4,1);
+    const calc = CONFIG.hexMap[token.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%16];
+    
+    if(sum === calc) {
+        setAuth('success'); // ★緑のチェックマーク
+        document.getElementById('statusText').innerText = "認証成功";
+        stopAudio();
+        connectPeer(token);
     } else {
-        log(`Checksum Error. Retrying...`, 'error');
-        setStatus("再スキャン中...", true);
+        updateToken(buf, true); // エラー表示
+        document.getElementById('statusText').innerText = "読み取り失敗";
+        setTimeout(() => {
+            resetUI();
+            setAuth('scanning');
+            startListening(); // 自動リトライ
+        }, 1500);
     }
 }
 
-// --- WEBRTC P2P & DATA TRANSFER ---
-function initPeerHost(token, file, text) {
-    peer = new Peer("sonic-v3-" + token);
-    peer.on('connection', c => {
-        conn = c; log("Peer Connected.", 'success');
-        conn.on('open', () => {
-            setStatus("接続確立。データ送信中...");
-            
-            // データ送信ペイロードの構築
-            const payload = {};
-            let infoMsg = "";
-            
-            if (file) {
-                payload.file = file;
-                payload.filename = file.name;
-                payload.filetype = file.type;
-                infoMsg += `File: ${file.name} `;
-            }
-            if (text) {
-                payload.text = text;
-                infoMsg += `Text: ${text.length} chars`;
-            }
-
-            conn.send(payload);
-            log(`Sent: ${infoMsg}`, 'success');
-            
-            // 完了処理
-            resetSenderState();
-        });
-    });
-    peer.on('error', e => { log("P2P Error: "+e, 'error'); resetSenderState(); });
+function resetConnection() {
+    if(conn) conn.close();
+    if(peer) peer.destroy();
 }
 
 function connectPeer(token) {
     peer = new Peer();
     peer.on('open', () => {
-        conn = peer.connect("sonic-v3-" + token);
-        conn.on('open', () => setStatus("接続確立。データ待機中..."));
-        conn.on('data', d => {
-            log("Data Packet Received.", 'success');
-            setStatus("データ受信完了。");
-
-            // 1. ファイル処理
-            if(d.file) {
-                log(`File: ${d.filename}`, 'success');
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([d.file],{type:d.filetype}));
-                a.download = d.filename; a.click();
-            }
-
-            // 2. テキスト処理
-            if(d.text) {
-                log("Text Message Received.", 'success');
-                const txtBox = document.getElementById('receivedTextContainer');
-                const txtContent = document.getElementById('receivedTextContent');
-                txtContent.textContent = d.text;
-                txtBox.style.display = 'block';
-            }
-
-            // 次の受信待機へ
-            setTimeout(() => {
-                setStatus("受信待機に戻るにはボタンを押してください。");
-                resetConnection();
-            }, 3000);
-        });
+        // 少し待ってから接続
+        setTimeout(() => {
+            conn = peer.connect("sonic-lux-" + token);
+            document.getElementById('statusText').innerText = "データ転送中...";
+            
+            conn.on('data', d => {
+                let filename = "受信データ";
+                if(d.file) {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(new Blob([d.file], {type:d.filetype}));
+                    a.download = d.filename;
+                    a.click();
+                    filename = d.filename;
+                }
+                if(d.text) filename = "メッセージ";
+                
+                showSuccessOverlay(filename);
+                setTimeout(resetUI, 4000);
+            });
+            conn.on('error', () => {
+                document.getElementById('statusText').innerText = "接続中断";
+                setTimeout(resetUI, 2000);
+            });
+        }, 500);
     });
-    peer.on('error', () => { log("Connect Failed. Retrying...", 'error'); startListening(); });
 }
 
-// --- EVENTS ---
-document.getElementById('fileInput').addEventListener('change', (e) => {
-    const f = e.target.files[0];
-    if(f) document.getElementById('fileInfo').innerText = `${f.name} (${(f.size/1024).toFixed(1)}KB)`;
-    else document.getElementById('fileInfo').innerText = "ファイルなし";
+// Event Bindings
+document.getElementById('fileInput').addEventListener('change', e => {
+    if(e.target.files[0]) document.getElementById('fileInfo').innerText = e.target.files[0].name;
 });
-
-document.getElementById('btnTransmit').addEventListener('click', () => {
-    // 毎回新しいトークン
-    const token = Array.from({length:4},()=>CONFIG.hexMap[Math.floor(Math.random()*16)]).join('');
-    transmitSequence(token);
-});
-document.getElementById('btnListen').addEventListener('click', startListening);
-
 </script>
 </body>
 </html>
