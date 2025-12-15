@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sonic Drop - v28</title>
+    <title>All Drop - v28</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 
@@ -23,12 +23,23 @@
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
 
+        /* --- FIX FOR MOBILE WHITE BARS --- */
+        html {
+            height: 100%;
+            background-color: var(--bg);
+            overflow: hidden;
+        }
+
         body {
             margin: 0; padding: 0; background-color: var(--bg); color: var(--text-main);
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             height: 100vh; overflow: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: radial-gradient(circle at 50% -20%, #222224 0%, #080808 60%);
+            /* Ensure body covers expanding viewports on mobile */
+            min-height: 100vh;
+            /* Prevent rubber-banding on iOS */
+            overscroll-behavior: none;
         }
 
         .ambient-light {
@@ -118,7 +129,8 @@
 
         .status-label { 
             font-size: 11px; color: var(--primary); letter-spacing: 2px; margin-bottom: 8px; 
-            font-weight: 700; text-transform: uppercase; height: 1em; text-align: center; opacity: 0.8;
+            font-weight: 700; text-transform: uppercase; height: 1em; text-align: center;
+            opacity: 0.8;
         }
         .token-rack {
             font-family: "SF Mono", monospace; font-size: 22px; letter-spacing: 8px;
@@ -167,7 +179,7 @@
 
         .rx-hint { text-align: center; color: var(--text-sub); font-size: 12px; line-height: 1.6; opacity: 0.7; margin: 10px 0 20px; }
 
-        /* --- Success Modal (Updated) --- */
+        /* --- Success Modal --- */
         #completeModal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(40px);
             z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -175,12 +187,10 @@
         }
         #completeModal.visible { opacity: 1; pointer-events: auto; }
         
-        /* Modal Container for Layout */
         .modal-card {
             position: relative; width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Close Button (Updated) */
         .modal-close-btn {
             position: absolute; top: -60px; right: 0;
             width: 40px; height: 40px; border-radius: 50%; border: none;
